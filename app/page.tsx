@@ -1,113 +1,175 @@
-import Image from 'next/image'
+'use client';
 
-export default function Home() {
+import React, { useState, useEffect } from 'react';
+import Field from './Field';
+import Button from './Button';
+import Harvest from './Harvest';
+
+export default function HomePage() {
+  const [fields, setFields] = useState(() => {
+    return new Array(10).fill(
+      new Array(20).fill({
+        type: "荒野",
+        plantedTime: null,
+        crop: null
+      })
+    );
+  });
+ 
+  const [harvestCount, setHarvestCount] = useState({
+    rice: 0, wheat: 0, egg: 0, milk: 0
+  });
+
+  useEffect(() => {  // useEffectを使ったライフサイクル処理
+    const unitTime = 6000;
+    const interval = setInterval(() => {
+      setFields(fields =>
+        fields.map(row =>
+          row.map(field => {
+            // ground of type 荒野 or 耕地 doesn't change over time
+            if (field.type === "荒野" || field.type === "耕地" || field.type === "草地") return field;
+
+            // change state based on time since planted
+            const timeSincePlanted = Date.now() - new Date(field.plantedTime).getTime();
+            if (field.crop === "rice" || field.crop === "wheat") {
+              if (timeSincePlanted >= unitTime * 3) {
+                return { ...field, type: `収穫_${field.crop}` };
+              } else if (timeSincePlanted >= unitTime * 2) {
+                return { ...field, type: `成長_${field.crop}` };
+              } else if (timeSincePlanted >= unitTime) {
+                return { ...field, type: "発芽" };
+              } else {
+                return field;
+              }
+            } else {
+              if (timeSincePlanted >= unitTime * 3) {
+                if (field.crop === "milk") {
+                  return { ...field, type: "牛乳" };
+                } else {
+                  return { ...field, type: "卵" };
+                }
+              } else if (timeSincePlanted >= unitTime * 2) {
+                return { ...field, type: `満腹_${field.crop}` };
+              } else if (timeSincePlanted >= unitTime) {
+                return { ...field, type: `八分目_${field.crop}` };
+              } else {
+                return field;
+              }
+            }
+          })
+        )
+      );
+    }, 1000);
+
+    // cleanup on component unmount
+    return () => clearInterval(interval);
+
+  }, []);
+
+  const [selectedAction, setSelectedAction] = useState(null);
+
+  const handleClick = (i, j) => () => {
+    // クリックされたパネルの位置を取得
+    let newFields = JSON.parse(JSON.stringify(fields));
+    let selectedPanel = {...newFields[i][j]};
+  
+    switch (selectedAction) {
+      case '耕す':
+        if (selectedPanel.type === "荒野") selectedPanel.type = '耕地';
+        break;
+      case '米をまく':
+        if (selectedPanel.type === "耕地") {
+          selectedPanel.type = '播種';
+          selectedPanel.crop = 'rice';
+          selectedPanel.plantedTime = Date.now();
+        }
+        break;
+      case '麦をまく':
+        if (selectedPanel.type === "耕地") {
+          selectedPanel.type = '播種';
+          selectedPanel.crop = 'wheat';
+          selectedPanel.plantedTime = Date.now();
+        }
+        break;
+      case '収穫する':
+        if (selectedPanel.type.startsWith("収穫")) {
+          const currentCrop = selectedPanel.crop;
+          setHarvestCount(prevCount => ({...prevCount, [currentCrop]: prevCount[currentCrop] + 1}));
+          selectedPanel.type = '耕地';
+          selectedPanel.crop = null;
+        }
+        break;
+      case '草地にする':
+        if (selectedPanel.type === "荒野") selectedPanel.type = '草地';
+        break;
+      case '牛を放牧':
+        if (selectedPanel.type === "草地") {
+          selectedPanel.type = '空腹_milk';
+          selectedPanel.crop = 'milk';
+          selectedPanel.plantedTime = Date.now();
+        }
+        break;
+      case '鶏を放牧':
+        if (selectedPanel.type === "草地") {
+          selectedPanel.type = '空腹_egg';
+          selectedPanel.crop = 'egg';
+          selectedPanel.plantedTime = Date.now();
+        }
+        break;
+      case '搾乳する':
+        if (selectedPanel.type === "牛乳") {
+          setHarvestCount(prevCount => ({...prevCount, [selectedPanel.crop]: prevCount[selectedPanel.crop] + 1}));
+          selectedPanel.type = '空腹_milk';
+          selectedPanel.crop = 'milk';
+          selectedPanel.plantedTime = Date.now();
+        }
+        break;
+      case '採卵する':
+        if (selectedPanel.type === "卵") {
+          setHarvestCount(prevCount => ({...prevCount, [selectedPanel.crop]: prevCount[selectedPanel.crop] + 1}));
+          selectedPanel.type = '空腹_egg';
+          selectedPanel.crop = 'egg';
+          selectedPanel.plantedTime = Date.now();
+        }
+        break;
+      default:
+        break;
+    }
+  
+    newFields[i][j] = selectedPanel;
+    setFields(newFields);
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+    <div>
+      <div className="btnContainer">
+        <Button onClick={() => setSelectedAction('耕す')}>耕す</Button>
+        <Button onClick={() => setSelectedAction('米をまく')}>米をまく</Button>
+        <Button onClick={() => setSelectedAction('麦をまく')}>麦をまく</Button>
+        <Button onClick={() => setSelectedAction('収穫する')}>収穫する</Button>
+      </div>
+      <div className="btnContainer">
+        <Button onClick={() => setSelectedAction('草地にする')}>草地にする</Button>
+        <Button onClick={() => setSelectedAction('牛を放牧')}>牛を放牧</Button>
+        <Button onClick={() => setSelectedAction('鶏を放牧')}>鶏を放牧</Button>
+        <Button onClick={() => setSelectedAction('搾乳する')}>搾乳する</Button>
+        <Button onClick={() => setSelectedAction('採卵する')}>採卵する</Button>
+      </div>
+
+      <div className="grid">
+        {fields.map((row, i) =>
+          row.map((panel, j) => (
+            <Field 
+              key={`${i}-${j}`} 
+              panel={panel}
+              onClick={handleClick(i, j)}
             />
-          </a>
-        </div>
+          ))
+        )}
       </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+      <Harvest count={harvestCount} />
+    </div>
+  );
+  
 }

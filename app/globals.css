@@ -1,27 +1,85 @@
-@tailwind base;
+/* @tailwind base;
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities; */
 
-:root {
+/* :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
-}
+} */
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
   }
-}
+} */
 
 body {
-  color: rgb(var(--foreground-rgb));
+  /* color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,
       transparent,
       rgb(var(--background-end-rgb))
     )
-    rgb(var(--background-start-rgb));
+    rgb(var(--background-start-rgb)); */
+    background: rgb(235, 248, 169);
+}
+
+.grid {
+  width: 800px;
+  margin: 50px auto;
+  display: grid;
+  grid-template-columns: repeat(20, 1fr);
+}
+
+.panel {
+  width: 40px;
+  height: 41px;
+  position: relative;
+}
+
+.panel-image {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+  z-index: 1;
+}
+
+.btnContainer {
+  margin: 20px auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+button {
+  background-color: #4CAF50;
+  border: #4CAF50;
+  border-radius: 10px;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 10px 10px 0;
+  cursor: pointer;
+}
+
+button:hover {
+	transform: scale(1.10);
+}
+
+button:active {
+	transform: scale(0.9);
+}
+
+.harvest {
+  margin: 0 auto 50px;
+  width: 200px;
+  padding: 20px 50px;
+  background-color: #fff;
 }
